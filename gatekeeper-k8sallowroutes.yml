@@ -1,0 +1,10 @@
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sAllowedRoutes
+metadata:
+  name: secure-route
+spec:
+  match:
+    kinds:
+      - apiGroups: ["route.openshift.io"]
+        kinds: ["Route"]
+

@@ -1,0 +1,30 @@
+apiVersion: templates.gatekeeper.sh/v1beta1
+kind: ConstraintTemplate
+metadata:
+  name: k8suniqueroutehost
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sUniqueRouteHost
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8suniqueroutehost
+
+        identical(obj, review) {
+          obj.metadata.namespace == review.object.metadata.namespace
+          obj.metadata.name == review.object.metadata.name
+        }
+
+        violation[{"msg": msg}] {
+          input.review.kind.kind == "Route"
+          re_match("^(route.openshift.io)$", input.review.kind.group)
+          host := input.review.object.spec.host
+          other := data.inventory.namespace[ns][otherapiversion]["Route"][name]
+          re_match("^(route.openshift.io)/.+$", otherapiversion)
+          other.spec.host == host
+          not identical(other, input.review)
+          msg := sprintf("Route host conflicts with an existing route <%v>", [host])
+        }        
+
